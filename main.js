@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import * as maze from './maze.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const PI_2 = Math.PI / 2;
 
@@ -27,7 +28,6 @@ var segments;
 var startPos;
 var endPos;
 
-
 function init(){
     console.log("init start");
     scene = new THREE.Scene();
@@ -50,12 +50,12 @@ function init(){
     THREE.BufferGeometry.prototype.copy.call(blockGeom, new THREE.BoxGeometry());
     wallGeom = new THREE.InstancedBufferGeometry();
     console.log("will start creating maze");
-    const loader = new GLTFLoader();
+    var loader = new GLTFLoader();
     loader.load('wall.glb',
         function (gltf) {
             let wallModel = gltf.scene.getObjectByName('wall');
             THREE.BufferGeometry.prototype.copy.call(wallGeom, wallModel.geometry);
-            createMaze(3);
+            createMaze();
         },
         undefined,
         function (error) {
@@ -70,40 +70,45 @@ function init(){
     let ambientLight = new THREE.AmbientLight(0x808080);
     scene.add(ambientLight);
 
-    // maze variables
     mazeSize = 3;
     mazeData = null;
     mazeGroup = new THREE.Group();
     scene.add( mazeGroup );
-    // checkpoints
     mazeStarted = false;
     mazeFinished = false;
-    // save the positions of the entrance and exit of the maze
     startPos = new THREE.Vector3( maze.getOffset(1), maze.getOffset(1), maze.getOffset(1) );
     segments = mazeSize * 2 - 0.5;
     endPos = new THREE.Vector3();
-    // collisions
-    mazeNear = null; // closer to 0,0,0 (-)
     mazeFar = null;
     console.log("init complete");
+
+    //TODO: CONTROLS-MOUSE
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
 }
 
 function animate() {
     requestAnimationFrame(animate);
     console.log("animating");
-    //let delta = Math.min(fpsClock.getDelta() , 0.1);
+    let delta = Math.min(fpsClock.getDelta() , 0.1);
 	
 	renderer.render(scene, camera);
 }
 
-function createMaze(size) {
+function createMaze(size = mazeSize) {
+    console.log("i was called");
+    mazeSize = size;
+    console.log("will generate maze ", size);
     mazeData = maze.generateMaze(size);
+    console.log("done generating maze");
     mazeStarted = false;
     mazeFinished = false;
     mazeNear = null;
     mazeFar = null;
 
-    segments = size * 2 - 1;
+    segments = mazeSize * 2 - 1;
     endPos.set(maze.getOffset(segments), maze.getOffset(segments), maze.getOffset(segments + 2));
     camera.position.set( maze.getOffset(1), maze.getOffset(1), maze.getOffset(-2));
     camera.lookAt(maze.getOffset(1), maze.getOffset(1), 0);
@@ -113,6 +118,7 @@ function createMaze(size) {
     let wallColor = [];
     let walls = [];
     let blocks = [];
+    console.log("before loop");
 
     for (let i = 0; i < mazeData.collision_map.length; i++) 
     {
@@ -124,44 +130,45 @@ function createMaze(size) {
                     continue;
                 if(i!=0 && j!=0 && k!=0 && i%2==0 && j%2==0 && k%2==0 && i!=mazeData.bounds[0]*2 && j!=mazeData.bounds[1]*2 && j!=mazeData.bounds[2]*2)
                     continue;
+                let iWidth = maze.getWidth(i);
+                let jWidth = maze.getWidth(j);
+                let kWidth = maze.getWidth(k);
+                let colored = false;
+                if(iWidth + jWidth + kWidth >= 2 * maze.blockSize + maze.width)
+                    colored = true;
 
-                    let iWidth = maze.getWidth(i);
-                    let jWidth = maze.getWidth(j);
-                    let kWidth = maze.getWidth(k);
-                    let colored = false;
-
-                    if(iWidth + jWidth + kWidth >= 2 * maze.blockSize + maze.width)
-                        colored = true;
-
-                    if(colored)
-                    {
-                        tempWall.scale.set(maze.blockSize, maze.width, maze.blockSize);
-                        tempWall.position.set(maze.getOffset(i), maze.getOffset(j), maze.getOffset(k));
-                        if(iWidth == maze.width)
-                            tempWall.rotation.z = PI_2;
-                        else if(kWidth == maze.width)
-                            tempWall.rotation.x = PI_2;
-                        tempWall.updateMatrix();
-                        tempWall.rotation.set(0, 0, 0);
-                        walls.push(tempWall.matrix.clone());
-                        wallColor.push(
-                            //TODO: Change Colors
-                            0.15 + 0.7 * (i-1)/(mazeData.segments[0]),
-                            0.15 + 0.7 * (j-1)/(mazeData.segments[1]),
-                            0.15 + 0.7 * (k-1)/(mazeData.segments[2])
-                        );
-                    } 
-                    else 
-                    {
-                        tempWall.scale.set(maze.blockSize, maze.blockSize, maze.blockSize);
-                        tempWall.position.set(maze.getOffset(i), maze.getOffset(j), maze.getOffset(k));
-                        tempWall.updateMatrix();
-                        blocks.push(tempWall.matrix.clone());
-                    }
+                if(colored)
+                {  
+                    console.log("add colored wall");
+                    tempWall.scale.set(maze.blockSize, maze.width, maze.blockSize);
+                    tempWall.position.set(maze.getOffset(i), maze.getOffset(j), maze.getOffset(k));
+                    if(iWidth == maze.width)
+                        tempWall.rotation.z = PI_2;
+                    else if(kWidth == maze.width)
+                        tempWall.rotation.x = PI_2;
+                    tempWall.updateMatrix();
+                    tempWall.rotation.set(0, 0, 0);
+                    walls.push(tempWall.matrix.clone());
+                    wallColor.push(
+                        //TODO: Change Colors
+                        0.15 + 0.7 * (i-1)/(mazeData.segments[0]),
+                        0.15 + 0.7 * (j-1)/(mazeData.segments[1]),
+                        0.15 + 0.7 * (k-1)/(mazeData.segments[2])
+                    );
+                } 
+                else 
+                {
+                    tempWall.scale.set(iWidth, jWidth, kWidth);
+                    tempWall.position.set(maze.getOffset(i), maze.getOffset(j), maze.getOffset(k));
+                    tempWall.updateMatrix();
+                    blocks.push(tempWall.matrix.clone());
+                }
             }
         }
     }
+    console.log("after loop");
     wallGeom.setAttribute('color', new THREE.InstancedBufferAttribute(new Float32Array(wallColor), 3));
+    console.log(wallColor);
     let wallMesh = new THREE.InstancedMesh(wallGeom, wallMat, walls.length);
     let i = 0;
     walls.forEach((mat) => wallMesh.setMatrixAt(i++, mat));
@@ -174,8 +181,34 @@ function createMaze(size) {
     mazeGroup.add(blockMesh);
 
     timerRunning = false;
+    console.log("Complete call");
 }
 
-init();
+//TODO: CONTROLS-KEYBOARD
+window.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'w':
+            camera.position.x += 0.1;
+            break;
+        case 'a':
+            camera.position.x -= 0.1;
+            break;
+        case 's':
+            camera.position.y += 0.1;
+            break;
+        case 'd':
+            camera.position.y -= 0.1;
+            break;
+        case ' ':
+            camera.position.z += 0.1;
+            break;
+        case 'Shift':
+            camera.position.z -= 0.1;
+            break;
+    }w
+});
 
+console.log("init");
+init();
+console.log("before animate");
 animate();
