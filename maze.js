@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 var blockSize = 2;
 var width = blockSize / 32;
-var axes = [x, y, z];
+var axes = ['x', 'y', 'z'];
 
 function getWidth(){
     return width;
@@ -88,7 +88,7 @@ function generateMaze(size){
     function getDir(n){
         let dir = {x: 0, y: 0, z: 0};
         n -= 3;
-        dir[axes[n % 3]] = (num >= 3 ? 1 : -1);
+        dir[axes[n % 3]] = (n >= 3 ? 1 : -1);
         return dir;
     }
 
@@ -121,7 +121,7 @@ function generateMaze(size){
         exit_bias_pos[2] += exit_dir.z;
 
         board[exit_bias_pos[0]][exit_bias_pos[1]][exit_bias_pos[2]] = WALL;
-        removeCell(coord2num(...exit_bias_pos));
+        removeCell(getNum(...exit_bias_pos));
 
         exit_length += 1;
 
@@ -150,7 +150,7 @@ function generateMaze(size){
         while(board[curr.x][curr.y][curr.z] != 1){
             let dirNum = Math.floor(Math.random() * 6 + 3);
             let dir = getDir(dirNum);
-            while (!inmaze.Bounds(curr.x + dir.x*2, curr.y + dir.y*2, curr.z + dir.z*2, maze.bounds)|| board[curr.x + dir.x*2][curr.y + dir.y*2][curr.z + dir.z*2] == WALL)
+            while (!checkBounds(curr.x + dir.x*2, curr.y + dir.y*2, curr.z + dir.z*2, maze.bounds)|| board[curr.x + dir.x*2][curr.y + dir.y*2][curr.z + dir.z*2] == WALL)
             {
                 dirNum = Math.floor(Math.random() * 6 + 3);
                 dir = getDir(dirNum);
@@ -175,3 +175,5 @@ function generateMaze(size){
 
     return maze;
 }
+
+export{width, blockSize, getWidth, getOffset, generateMaze, getPos}
