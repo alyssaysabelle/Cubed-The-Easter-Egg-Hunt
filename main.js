@@ -205,6 +205,18 @@ window.addEventListener('keydown', (event) => {
         case 'Shift':
             camera.position.y -= 0.1;
             break;
+        case 'ArrowLeft':
+            camera.rotation.y -= 0.1;
+            break;
+        case 'ArrowRight':
+            camera.rotation.y += 0.1;
+            break;
+        case 'ArrowUp':
+            camera.rotation.x -= 0.1;
+            break;
+        case 'ArrowDown':
+            camera.rotation.x += 0.1;
+            break;
     }w
 });
 
