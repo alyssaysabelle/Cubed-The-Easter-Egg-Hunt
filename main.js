@@ -188,22 +188,22 @@ function createMaze(size = mazeSize) {
 window.addEventListener('keydown', (event) => {
     switch (event.key) {
         case 'w':
-            camera.position.x += 0.1;
-            break;
-        case 'a':
-            camera.position.x -= 0.1;
-            break;
-        case 's':
-            camera.position.y += 0.1;
-            break;
-        case 'd':
-            camera.position.y -= 0.1;
-            break;
-        case ' ':
             camera.position.z += 0.1;
             break;
-        case 'Shift':
+        case 'a':
+            camera.position.x += 0.1;
+            break;
+        case 's':
             camera.position.z -= 0.1;
+            break;
+        case 'd':
+            camera.position.x -= 0.1;
+            break;
+        case ' ':
+            camera.position.y += 0.1;
+            break;
+        case 'Shift':
+            camera.position.y -= 0.1;
             break;
     }w
 });
