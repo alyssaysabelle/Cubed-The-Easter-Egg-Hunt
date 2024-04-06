@@ -28,6 +28,23 @@ var segments;
 var startPos;
 var endPos;
 
+// start button
+var startButton = document.getElementById('startBtn');
+var gameContainer = document.getElementById('start');
+var quitButton = document.getElementById('quitBtn');
+
+startButton.addEventListener('click', function() {
+    console.log("start button clicked");
+    gameContainer.hidden = true;
+    init();
+    animate();
+});
+
+quitButton.addEventListener('click', function() {
+    console.log("quit button clicked");
+    window.close();
+});
+
 function init(){
     console.log("init start");
     scene = new THREE.Scene();
@@ -83,10 +100,24 @@ function init(){
     console.log("init complete");
 
     //TODO: CONTROLS-MOUSE
+    // fix limit of camera rotation
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.enableZoom = true;
+
+    controls.enablePan = false;
+    controls.enableRotate = true;
+    controls.rotateSpeed = 0.5;
+
+    function updateCameraRotation(event) {
+    const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+    const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+    camera.rotation.y -= deltaX * 0.002;
+    camera.rotation.x -= deltaY * 0.002;
+    }
+
+    document.addEventListener('mousemove', updateCameraRotation);
 }
 
 function animate() {
@@ -186,18 +217,24 @@ function createMaze(size = mazeSize) {
 
 //TODO: CONTROLS-KEYBOARD
 window.addEventListener('keydown', (event) => {
+    const direction = new THREE.Vector3();
+    const rotation = camera.rotation;
+    direction.set(0, 0, -1).applyEuler(rotation);
+    const right = new THREE.Vector3();
+    right.crossVectors(direction, camera.up);
+
     switch (event.key) {
         case 'w':
-            camera.position.z += 0.1;
+            camera.position.add(direction);
             break;
         case 'a':
-            camera.position.x += 0.1;
+            camera.position.sub(right);
             break;
         case 's':
-            camera.position.z -= 0.1;
+            camera.position.sub(direction);
             break;
         case 'd':
-            camera.position.x -= 0.1;
+            camera.position.add(right);
             break;
         case ' ':
             camera.position.y += 0.1;
@@ -217,10 +254,5 @@ window.addEventListener('keydown', (event) => {
         case 'ArrowDown':
             camera.rotation.x += 0.1;
             break;
-    }w
+    }
 });
-
-console.log("init");
-init();
-console.log("before animate");
-animate();
