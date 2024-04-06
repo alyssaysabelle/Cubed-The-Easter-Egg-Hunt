@@ -4,8 +4,11 @@ var blockSize = 2;
 var width = blockSize / 32;
 var axes = ['x', 'y', 'z'];
 
-function getWidth(){
-    return width;
+function getWidth(n){
+    if(n%2 == 0)
+        return width;
+    else
+        return blockSize;
 }
 
 function getOffset(n){
@@ -35,6 +38,7 @@ function getPos(pos){
 }
 
 function generateMaze(size){
+    console.log("generating maze");
     let maze = {
         bounds: [size, size, size],
         segments: [0, 0, 0],
@@ -107,7 +111,7 @@ function generateMaze(size){
     board[exit_bias_pos[0]][exit_bias_pos[1]][exit_bias_pos[2]] = WALL;
 
     removeCell(getNum(...exit_bias_pos));
-
+    console.log("start of while loop 1");
     while(exit_length < maze.bounds[exit_dir_axis])
     {
         exit_bias_pos[0] += exit_dir.x;
@@ -141,7 +145,7 @@ function generateMaze(size){
     board[exit_bias_pos[0]][exit_bias_pos[1]][exit_bias_pos[2]] = 1;
 
     emptyCell(getRandCell());
-
+    console.log("checkpoint");
     while(full.length > 0){
         let start = getRandCell();
         let startC = getCoor(start);
@@ -158,8 +162,17 @@ function generateMaze(size){
             board[curr.x][curr.y][curr.z] = dirNum;
             axes.forEach(a => curr[a] += dir[a]*2);
         }
-    }
+        curr = {x: startC.x, y: startC.y, z: startC.z};
+        while(board[curr.x][curr.y][curr.z] != 1){
+            let dirNum = board[curr.x][curr.y][curr.z];
+            let dir = getDir(dirNum);
+            emptyCell(getNum(curr.x, curr.y, curr.z));
+            board[curr.x + dir.x][curr.y + dir.y][curr.z + dir.z] = 1;
 
+            axes.forEach(a => curr[a] += dir[a]*2);
+        }
+    }
+    console.log("checkpoint 2");
     maze.collision_map = Array(maze.segments[0]);
     for(let i = 0; i < maze.segments[0]; i++)
     {
@@ -172,7 +185,7 @@ function generateMaze(size){
 
     maze.collision_map[1][1][0] = false;
     maze.collision_map[maze.segments[0] - 2][maze.segments[1] - 2][maze.segments[2] - 1] = false;
-
+    console.log("completed generation, returning");
     return maze;
 }
 
