@@ -29,6 +29,7 @@ var mazeFar;
 var segments;
 var startPos;
 var endPos;
+var keys = [];
 
 // start button
 var startButton = document.getElementById('startBtn');
@@ -39,6 +40,7 @@ startButton.addEventListener('click', function() {
     console.log("start button clicked");
     gameContainer.hidden = true;
     init();
+    addKeys(5);
     animate();
 });
 
@@ -141,7 +143,7 @@ function animate() {
     console.log("animating");
     let delta = Math.min(fpsClock.getDelta() , 0.1);
     collisionCheck();
-	
+    checkObtainedKeys();	
 	renderer.render(scene, camera);
 }
 
@@ -312,8 +314,12 @@ function collisionCheck(){
         mazeStarted = false;
     else if(mazeStarted == false && mazeFar.z == 1 && mazeFar.x == 1 && mazeFar.y == 1)
         mazeStarted = true;
-    else if(mazeStarted == true && mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1)
+    else if(mazeStarted == true && mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length == 0)
         completed();
+    else if(mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length != 0){
+        //PUT INC KEYS HERE
+        console.log("Incomplete Keys: ", keys.length, " more to find");
+    }
 }
 
 function completed(){
@@ -363,3 +369,48 @@ window.addEventListener('keydown', (event) => {
             break;
     }
 });
+
+function addKeys(num){
+    for(let i = 0; i < num; i++){
+        let geometry = new THREE.SphereGeometry( 0.15, 32, 16); 
+        let material = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
+        let sphere = new THREE.Mesh( geometry, material );
+        segments = mazeSize * 2 - 1;
+        let x = randomOddInteger(segments);
+        let y = randomOddInteger(segments);
+        let z = randomOddInteger(segments);
+
+
+        sphere.position.set(maze.getOffset(x),maze.getOffset(y),maze.getOffset(z));
+        console.log("SPHERE", sphere.position);
+        scene.add(sphere);
+        keys.push(sphere);
+    }
+}
+
+function checkObtainedKeys(){
+    console.log(keys);
+    for(let i = 0; i < keys.length; i++){
+        if(camera.position.distanceToSquared(keys[i].position) <= 0.05)
+        {
+            keys[i].removeFromParent();
+            keys.splice(i, 1);
+        }
+    }
+}
+
+function randomOddInteger(max) {
+    // Generate a random integer within the specified range
+    let num = Math.floor(Math.random() * (max+1));
+    
+    // Make sure the number is odd
+    if (num % 2 === 0 && num != 0) {
+        // If it's even, add 1 to make it odd
+        num--;
+    }
+    else if(num == 0){
+        num = 1;
+    }
+    
+    return num;
+}
