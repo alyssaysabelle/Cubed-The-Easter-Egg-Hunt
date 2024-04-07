@@ -30,11 +30,15 @@ var segments;
 var startPos;
 var endPos;
 var keys = [];
+var eggModels = ['bulbasaur_egg.glb', 'paint_egg.glb', 'pink_egg.glb', 'spots_egg.glb', 'stripes_egg.glb', 'heart_egg.glb', 'dragon_egg.glb', 'line_egg.glb'];
 
 // start button
 var startButton = document.getElementById('startBtn');
 var gameContainer = document.getElementById('start');
+var restartButton = document.getElementById('restartBtn');
 var quitButton = document.getElementById('quitBtn');
+var quitButton2 = document.getElementById('quitBtn2');
+var exitScreen = document.getElementById('end');
 
 startButton.addEventListener('click', function() {
     console.log("start button clicked");
@@ -49,6 +53,18 @@ quitButton.addEventListener('click', function() {
     window.close();
 });
 
+quitButton2.addEventListener('click', function() {
+    console.log("quit button clicked");
+    window.close();
+});
+
+restartButton.addEventListener('click', function() {
+    console.log("restart button clicked");
+    exitScreen.hidden = true;
+    game.hidden = false;
+    newGame();
+});
+
 function init(){
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -56,8 +72,8 @@ function init(){
     renderer = new THREE.WebGLRenderer( { antialias: true, powerPreference: "high-performance" } );
     renderer.setPixelRatio( Math.min(window.devicePixelRatio, 2) );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.domElement.id = "mainCanvas";
-    document.body.appendChild( renderer .domElement );
+    renderer.domElement.id = "gameCanvas";
+    document.getElementById('game').appendChild( renderer.domElement );
 
     fpsClock = new THREE.Clock();
     timerStart = 0;
@@ -81,6 +97,35 @@ function init(){
             console.error('Error loading GLTF model:', error);
         }
     );
+
+    loader.load('start.glb',
+        function (gltf) {
+            let startModel = gltf.scene.getObjectByName('Start');
+            let start = startModel.clone();
+            start.position.set(2, 1, -1);
+            start.rotateZ(179.05);
+            scene.add(start);
+        },
+        undefined,
+        function (error) {
+            console.error('Error loading GLTF model:', error);
+        }
+    );
+
+    loader.load('exit.glb',
+        function (gltf) {
+            let exitModel = gltf.scene.getObjectByName('Exit');
+            let exit = exitModel.clone();
+            exit.position.set(5.85, 5, 7);
+            exit.rotateZ(179.05);
+            scene.add(exit);
+        },
+        undefined,
+        function (error) {
+            console.error('Error loading GLTF model:', error);
+        }
+    );
+
     let localLight = new THREE.PointLight(0xffffff);
     camera.add(localLight);
     scene.add(camera);
@@ -97,17 +142,6 @@ function init(){
     segments = mazeSize * 2 - 0.5;
     endPos = new THREE.Vector3();
     mazeFar = null;
-
-    //TODO: CONTROLS-MOUSE
-    // fix limit of camera rotation
-    // const controls = new OrbitControls(camera, renderer.domElement);
-    // controls.enableDamping = true;
-    // controls.dampingFactor = 0.25;
-    // controls.enableZoom = true;
-
-    // controls.enablePan = false;
-    // controls.enableRotate = true;
-    // controls.rotateSpeed = 0.05;
 
     let controls = new PointerLockControls(camera, renderer.domElement);
     let element = document.body;
@@ -130,8 +164,9 @@ function init(){
         //     scope.applyRotation( scope.tmpVector, 0.01 );
         //     scope.dispatchEvent( changeEvent );
         // }
-    });    
+    }); 
 }
+
 
 function animate() {
     requestAnimationFrame(animate);
@@ -310,10 +345,14 @@ function collisionCheck(){
 
 function completed(){
     mazeFinished = true;
-
+    updateInfo(``);
+    document.getElementById('game').innerHTML = '';
     let seconds = ((Date.now() - timerStart) / 1000).toFixed(2);
     console.log(seconds);
+    document.getElementById('time').textContent = seconds + " seconds";
+    exitScreen.hidden = false;
 }
+
 //TODO: CONTROLS-KEYBOARD
 window.addEventListener('keydown', (event) => {
     const direction = new THREE.Vector3();
@@ -341,47 +380,39 @@ window.addEventListener('keydown', (event) => {
         case 'Shift':
             camera.position.y -= 0.05;
             break;
-        case 'ArrowLeft':
-            camera.rotation.y -= 0.05;
-            break;
-        case 'ArrowRight':
-            camera.rotation.y += 0.05;
-            break;
-        case 'ArrowUp':
-            camera.rotation.x -= 0.05;
-            break;
-        case 'ArrowDown':
-            camera.rotation.x += 0.05;
-            break;
     }
 });
 
-function addKeys(num){
+function addKeys(num) {
     let placed = new Set();
-    for(let i = 0; i < num; i++){
-        let geometry = new THREE.SphereGeometry( 0.15, 32, 16); 
-        let material = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
-        let sphere = new THREE.Mesh( geometry, material );
-        segments = mazeSize * 2 - 1;
 
-        let x, y, z;
-        do {
-            x = randomOddInteger(segments);
-            y = randomOddInteger(segments);
-            z = randomOddInteger(segments);
-        } while (placed.has(`${x},${y},${z}`));
+    for (let i = 0; i < num; i++) {
+        const randomFilename = eggModels[Math.floor(Math.random() * eggModels.length)];
+        const loader = new GLTFLoader();
+        loader.load(randomFilename, (gltf) => {
+            let eggModel = gltf.scene.clone();
+            eggModel.scale.set(0.15, 0.15, 0.15);
+            let x, y, z;
+            do {
+                x = randomOddInteger(segments);
+                y = randomOddInteger(segments);
+                z = randomOddInteger(segments);
+            } while (placed.has(`${x},${y},${z}`));
 
-        placed.add(`${x},${y},${z}`);
+            placed.add(`${x},${y},${z}`);
 
-        sphere.position.set(maze.getOffset(x),maze.getOffset(y),maze.getOffset(z));
-        scene.add(sphere);
-        keys.push(sphere);
+            eggModel.position.set(maze.getOffset(x), maze.getOffset(y), maze.getOffset(z));
+            scene.add(eggModel);
+            keys.push(eggModel);
+        });
     }
 }
+
 
 function checkObtainedKeys(){
     if (keys.length != 0)
         console.log("Remaining Keys: ", keys.length);
+    updateInfo(`Eggs Left: ${keys.length}, Eggs Found: ${5 - keys.length}`);
     for(let i = 0; i < keys.length; i++){
         if(camera.position.distanceToSquared(keys[i].position) <= 0.05)
         {
@@ -389,6 +420,11 @@ function checkObtainedKeys(){
             keys.splice(i, 1);
         }
     }
+}
+
+function updateInfo(text) {
+    const infoDiv = document.getElementById('info');
+    infoDiv.textContent = text;
 }
 
 function randomOddInteger(max) {
@@ -407,7 +443,7 @@ function randomOddInteger(max) {
     return num;
 }
 
-function newGame(size){
-    createMaze(size);
-    addKeys(size * 2 - 1);
+function newGame(){
+    init();
+    addKeys(5);
 }

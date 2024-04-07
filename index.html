@@ -3,15 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Maze</title>
+    <title>Cubed: The Easter Egg Hunt</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="info"></div>
+    <div id="game"></div>
     <div id="start">
-        <h1>3D Maze</h1>
+        <h1>Cubed: The Easter Egg Hunt</h1>
+        <p>Welcome! Your goal is to find all the hidden Easter eggs scattered throughout the maze. Explore the maze carefully and collect all the eggs before proceeding to the exit.<br>Happy Hunting!</p>
         <button id="startBtn">Start</button>
 		<button id="quitBtn">Quit</button>
+    </div>
+    <div id="end" hidden>
+        <h1 id="finish">Game Finished!</h1>
+        <p>Congratulations, you completed the Easter Hunt!</p>
+        <p>Time Taken: <span id="time"></span></p>
+        <button id="restartBtn">Play Again</button>
+        <button id="quitBtn2">Quit</button>
     </div>
     <script type="module" src="main.js"></script>
 </body>

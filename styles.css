@@ -1,12 +1,30 @@
+@font-face {
+    font-family: 'CustomFont';
+    src: url('honeybear.ttf') format('truetype');
+}
+
 body {
+    letter-spacing: 2px;
     margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #000;
-    font-family: 'Press Start 2P';
+    background-color: #FFF6E6;
+    font-family: 'CustomFont';
+}
+
+p{
+    font-size: 20px;
+    width: 70%;
+    margin: auto;
+    color: #8B4513;
+    text-align: center;
+}
+
+button {
+    margin-top: 50px;
 }
 
 #start {
@@ -14,18 +32,22 @@ body {
 }
 
 h1 {
-    font-size: 80px;
-    color: #f8ff00;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    font-size: 50px;
+    color: #8B4513;
     padding-bottom: 40px;
+}
+
+#finish {
+    text-align: center;
+    color: #96281B;
 }
 
 #startBtn {
     padding: 15px 30px;
     font-size: 20px;
-    font-family: 'Press Start 2P';
-    background-color: #00ff00;
-    color: #000;
+    font-family: 'CustomFont';
+    background-color: #A9DFBF;
+    color: #8B4513;
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -34,15 +56,15 @@ h1 {
 }
 
 #startBtn:hover {
-    background-color: #00dd00;
+    background-color: #7DCEA0;
 }
 
-#quitBtn {
+#restartBtn {
     padding: 15px 30px;
     font-size: 20px;
-    font-family: 'Press Start 2P';
-    background-color: #ff0000;
-    color: #000;
+    font-family: 'CustomFont';
+    background-color: #A9DFBF;
+    color: #8B4513;
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -50,6 +72,37 @@ h1 {
     transition: background-color 0.3s;
 }
 
-#quitBtn:hover {
-    background-color: #dd0000;
+#restartBtn:hover {
+    background-color: #7DCEA0;
+}
+
+#quitBtn, #quitBtn2 {
+    padding: 15px 30px;
+    font-size: 20px;
+    font-family: 'CustomFont';
+    background-color: #F1948A;
+    color: #8B4513;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+}
+
+#quitBtn:hover, #quitBtn2:hover {
+    background-color: #D98880;
+}
+
+#info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #FFF6E6;
+    font-family: 'CustomFont';
+    font-size: 20px;
+    z-index: 1000;
+}
+
+#end {
+    text-align: center;
 }
