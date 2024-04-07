@@ -84,7 +84,7 @@ function init(){
     let localLight = new THREE.PointLight(0xffffff);
     camera.add(localLight);
     scene.add(camera);
-    let ambientLight = new THREE.AmbientLight(0x808080);
+    let ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
     mazeSize = 3;
@@ -357,15 +357,21 @@ window.addEventListener('keydown', (event) => {
 });
 
 function addKeys(num){
+    let placed = new Set();
     for(let i = 0; i < num; i++){
         let geometry = new THREE.SphereGeometry( 0.15, 32, 16); 
         let material = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
         let sphere = new THREE.Mesh( geometry, material );
         segments = mazeSize * 2 - 1;
 
-        let x = randomOddInteger(segments);
-        let y = randomOddInteger(segments);
-        let z = randomOddInteger(segments);
+        let x, y, z;
+        do {
+            x = randomOddInteger(segments);
+            y = randomOddInteger(segments);
+            z = randomOddInteger(segments);
+        } while (placed.has(`${x},${y},${z}`));
+
+        placed.add(`${x},${y},${z}`);
 
         sphere.position.set(maze.getOffset(x),maze.getOffset(y),maze.getOffset(z));
         scene.add(sphere);
