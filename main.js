@@ -122,14 +122,14 @@ function init(){
     }
 
     document.addEventListener('mousemove', function(event) {
-        if (controls.isLocked) {
-            let movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-            let movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+        // if (controls.isLocked) {
+        //     let movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        //     let movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-            this.tmpVector.set( - movementY, - movementX, 0 );
-            scope.applyRotation( scope.tmpVector, 0.01 );
-            scope.dispatchEvent( changeEvent );
-        }
+        //     this.tmpVector.set( - movementY, - movementX, 0 );
+        //     scope.applyRotation( scope.tmpVector, 0.01 );
+        //     scope.dispatchEvent( changeEvent );
+        // }
     });    
 }
 
@@ -299,10 +299,12 @@ function collisionCheck(){
     else if(mazeStarted == false && mazeFar.z == 1 && mazeFar.x == 1 && mazeFar.y == 1)
         mazeStarted = true;
     else if(mazeStarted == true && mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length == 0)
-        completed();
-    else if(mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length != 0){
-        //PUT INC KEYS HERE
-        console.log("Incomplete Keys: ", keys.length, " more to find");
+    {
+        if(keys.length == 0)
+            completed();
+        else
+            //PUT INC KEYS HERE
+            console.log("Incomplete Keys: ", keys.length, " more to find");
     }
 }
 
