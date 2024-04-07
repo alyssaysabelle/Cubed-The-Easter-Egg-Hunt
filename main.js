@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as maze from './maze.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 const PI_2 = Math.PI / 2;
 
@@ -10,6 +11,7 @@ var camera;
 var renderer
 
 var fpsClock;
+var timerStart;
 var timerRunning;
 
 var wallMat;
@@ -57,8 +59,8 @@ function init(){
     document.body.appendChild( renderer .domElement );
 
     fpsClock = new THREE.Clock();
-    // timerStart = 0;
-    // timerRunning = false;
+    timerStart = 0;
+    timerRunning = false;
     
     wallMat = new THREE.MeshLambertMaterial({vertexColors: true});
     blockMat = new THREE.MeshPhongMaterial({color: 'hsl(0, 0%, 10%)'});
@@ -101,20 +103,38 @@ function init(){
 
     //TODO: CONTROLS-MOUSE
     // fix limit of camera rotation
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.25;
-    controls.enableZoom = true;
+    // const controls = new OrbitControls(camera, renderer.domElement);
+    // controls.enableDamping = true;
+    // controls.dampingFactor = 0.25;
+    // controls.enableZoom = true;
 
-    controls.enablePan = false;
-    controls.enableRotate = true;
-    controls.rotateSpeed = 0.5;
+    // controls.enablePan = false;
+    // controls.enableRotate = true;
+    // controls.rotateSpeed = 0.05;
+
+    let controls = new PointerLockControls(camera, renderer.domElement);
+    let element = document.body;
+    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+    element.requestPointerLock();
+    scene.add(controls.getObject());
+
+    if(timerRunning == false){
+        timerRunning = true;
+        timerStart = Date.now();
+    }
+
 
     function updateCameraRotation(event) {
     const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-    camera.rotation.y -= deltaX * 0.002;
-    camera.rotation.x -= deltaY * 0.002;
+    camera.rotation.y += deltaX * 0.002;
+
+    if(camera.rotation.x + deltaY * 0.002 >= -Math.PI - Math.PI / 2 && camera.rotation.x + deltaY * 0.002 <= -Math.PI + Math.PI / 2 )
+        camera.rotation.x += deltaY * 0.002;
+    else if(camera.rotation.x + deltaY * 0.002 <= -Math.PI - Math.PI / 2 )
+        camera.rotation.x = -Math.PI - Math.PI / 2;
+    else if(camera.rotation.x + deltaY * 0.002 >= -Math.PI + Math.PI / 2)
+        camera.rotation.x = -Math.PI + Math.PI / 2;
     }
 
     document.addEventListener('mousemove', updateCameraRotation);
@@ -124,6 +144,7 @@ function animate() {
     requestAnimationFrame(animate);
     console.log("animating");
     let delta = Math.min(fpsClock.getDelta() , 0.1);
+    collisionCheck();
 	
 	renderer.render(scene, camera);
 }
@@ -215,11 +236,101 @@ function createMaze(size = mazeSize) {
     console.log("Complete call");
 }
 
+const collisionThreshold = 0.25;
+var axes = {x: 0, y: 1, z: 2};
+function checkCollisionAxis(axis, axis1, axis2, pos, newPos, otherPos, s){
+    let min1 = Math.min(pos[axis1], otherPos[axis1]);
+    let min2 = Math.min(pos[axis2], otherPos[axis2]);
+    let max1 = Math.max(pos[axis1], otherPos[axis1]);
+    let max2 = Math.max(pos[axis2], otherPos[axis2]);
+    let collide = false;
+    let check = pos[axis] + s;
+    let i = Array(3);
+    i[axes[axis]] = check;
+    function getData(i1, i2){
+        i[axes[axis1]] = i1;
+        i[axes[axis2]] = i2;
+        return mazeData.collision_map[i[0]][i[1]][i[2]];
+    } 
+    for(let j = Math.max(min1, 0); j <= Math.min(mazeData.bounds[axes[axis1]]*2, max1); j++)
+    {
+        for(let k = Math.max(min2, 0); k <= Math.min(mazeData.bounds[axes[axis2]]*2, max2); k++)
+        {
+            if(check <= mazeData.bounds[axes[axis]]*2 && check >= 0 && getData(j,k)){
+                collide = true;
+                break;
+            }
+        }
+        if(collide == true)
+            break;
+    }
+
+    if(collide == true){
+        camera.position[axis] = maze.getOffset(pos[axis]+s) - s * (collisionThreshold + maze.width / 2);
+        newPos[axis] = pos[axis];
+    } else {
+        pos[axis] += s;
+    }
+}
+
+function collisionCheck(){
+    let near = new THREE.Vector3();
+    let far = new THREE.Vector3();
+    near.copy(camera.position);
+    near.addScalar(-collisionThreshold);
+    far.copy(camera.position);
+    far.addScalar(collisionThreshold);
+    let newNearPos = maze.getPos(near);
+    let newFarPos = maze.getPos(far);
+    if(mazeNear == null && mazeFar == null){
+        mazeNear = newNearPos;
+        mazeFar = newFarPos;
+    }
+
+    if(newNearPos.distanceToSquared(mazeNear) != 0)
+    {
+        console.log(newNearPos, " |N| ", mazeNear);
+        if(newNearPos.x - mazeNear.x < 0)
+            checkCollisionAxis('x', 'y', 'z', mazeNear, newNearPos, mazeFar, -1);
+        if(newNearPos.y - mazeNear.y < 0)
+            checkCollisionAxis('y', 'x', 'z', mazeNear, newNearPos, mazeFar, -1);
+        if(newNearPos.z - mazeNear.z < 0)
+            checkCollisionAxis('z', 'y', 'x', mazeNear, newNearPos, mazeFar, -1);
+    }
+
+    if(newFarPos.distanceToSquared(mazeFar) != 0)
+    {
+        console.log(newFarPos, " |F| ", mazeFar);
+        if(newFarPos.x - mazeFar.x > 0)
+            checkCollisionAxis('x', 'y', 'z', mazeFar, newFarPos, mazeNear, 1);
+        if(newFarPos.y - mazeFar.y > 0)
+            checkCollisionAxis('y', 'x', 'z', mazeFar, newFarPos, mazeNear, 1);
+        if(newFarPos.z - mazeFar.z > 0)
+            checkCollisionAxis('z', 'y', 'x', mazeFar, newFarPos, mazeNear, 1);
+    }
+
+    mazeNear = newNearPos;
+    mazeFar = newFarPos;
+
+    if(mazeFar.z == -1 && mazeStarted == true)
+        mazeStarted = false;
+    else if(mazeStarted == false && mazeFar.z == 1 && mazeFar.x == 1 && mazeFar.y == 1)
+        mazeStarted = true;
+    else if(mazeStarted == true && mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1)
+        completed();
+}
+
+function completed(){
+    mazeFinished = true;
+
+    let seconds = ((Date.now() - timerStart) / 1000).toFixed(2);
+    console.log(seconds);
+}
 //TODO: CONTROLS-KEYBOARD
 window.addEventListener('keydown', (event) => {
     const direction = new THREE.Vector3();
     const rotation = camera.rotation;
-    direction.set(0, 0, -1).applyEuler(rotation);
+    direction.set(0, 0, -0.05).applyEuler(rotation);
     const right = new THREE.Vector3();
     right.crossVectors(direction, camera.up);
 
@@ -237,22 +348,22 @@ window.addEventListener('keydown', (event) => {
             camera.position.add(right);
             break;
         case ' ':
-            camera.position.y += 0.1;
+            camera.position.y += 0.05;
             break;
         case 'Shift':
-            camera.position.y -= 0.1;
+            camera.position.y -= 0.05;
             break;
         case 'ArrowLeft':
-            camera.rotation.y -= 0.1;
+            camera.rotation.y -= 0.05;
             break;
         case 'ArrowRight':
-            camera.rotation.y += 0.1;
+            camera.rotation.y += 0.05;
             break;
         case 'ArrowUp':
-            camera.rotation.x -= 0.1;
+            camera.rotation.x -= 0.05;
             break;
         case 'ArrowDown':
-            camera.rotation.x += 0.1;
+            camera.rotation.x += 0.05;
             break;
     }
 });
