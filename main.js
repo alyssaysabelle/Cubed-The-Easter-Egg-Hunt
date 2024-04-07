@@ -117,27 +117,23 @@ function init(){
     element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
     element.requestPointerLock();
     scene.add(controls.getObject());
+    controls.lock();
 
     if(timerRunning == false){
         timerRunning = true;
         timerStart = Date.now();
     }
 
+    document.addEventListener('mousemove', function(event) {
+        if (controls.isLocked) {
+            let movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            let movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-    function updateCameraRotation(event) {
-    const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-    const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-    camera.rotation.y += deltaX * 0.002;
-
-    if(camera.rotation.x + deltaY * 0.002 >= -Math.PI - Math.PI / 2 && camera.rotation.x + deltaY * 0.002 <= -Math.PI + Math.PI / 2 )
-        camera.rotation.x += deltaY * 0.002;
-    else if(camera.rotation.x + deltaY * 0.002 <= -Math.PI - Math.PI / 2 )
-        camera.rotation.x = -Math.PI - Math.PI / 2;
-    else if(camera.rotation.x + deltaY * 0.002 >= -Math.PI + Math.PI / 2)
-        camera.rotation.x = -Math.PI + Math.PI / 2;
-    }
-
-    document.addEventListener('mousemove', updateCameraRotation);
+            this.tmpVector.set( - movementY, - movementX, 0 );
+            scope.applyRotation( scope.tmpVector, 0.01 );
+            scope.dispatchEvent( changeEvent );
+        }
+    });    
 }
 
 function animate() {
