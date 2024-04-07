@@ -50,7 +50,6 @@ quitButton.addEventListener('click', function() {
 });
 
 function init(){
-    console.log("init start");
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
     camera.position.set( maze.getOffset(1), maze.getOffset(1), maze.getOffset(-2));
@@ -70,7 +69,6 @@ function init(){
     blockGeom = new THREE.InstancedBufferGeometry();
     THREE.BufferGeometry.prototype.copy.call(blockGeom, new THREE.BoxGeometry());
     wallGeom = new THREE.InstancedBufferGeometry();
-    console.log("will start creating maze");
     var loader = new GLTFLoader();
     loader.load('wall.glb',
         function (gltf) {
@@ -83,8 +81,6 @@ function init(){
             console.error('Error loading GLTF model:', error);
         }
     );
-
-    console.log("created maze");
     let localLight = new THREE.PointLight(0xffffff);
     camera.add(localLight);
     scene.add(camera);
@@ -101,7 +97,6 @@ function init(){
     segments = mazeSize * 2 - 0.5;
     endPos = new THREE.Vector3();
     mazeFar = null;
-    console.log("init complete");
 
     //TODO: CONTROLS-MOUSE
     // fix limit of camera rotation
@@ -140,7 +135,6 @@ function init(){
 
 function animate() {
     requestAnimationFrame(animate);
-    console.log("animating");
     let delta = Math.min(fpsClock.getDelta() , 0.1);
     collisionCheck();
     checkObtainedKeys();	
@@ -148,11 +142,8 @@ function animate() {
 }
 
 function createMaze(size = mazeSize) {
-    console.log("i was called");
     mazeSize = size;
-    console.log("will generate maze ", size);
     mazeData = maze.generateMaze(size);
-    console.log("done generating maze");
     mazeStarted = false;
     mazeFinished = false;
     mazeNear = null;
@@ -168,7 +159,6 @@ function createMaze(size = mazeSize) {
     let wallColor = [];
     let walls = [];
     let blocks = [];
-    console.log("before loop");
 
     for (let i = 0; i < mazeData.collision_map.length; i++) 
     {
@@ -189,7 +179,6 @@ function createMaze(size = mazeSize) {
 
                 if(colored)
                 {  
-                    console.log("add colored wall");
                     tempWall.scale.set(maze.blockSize, maze.width, maze.blockSize);
                     tempWall.position.set(maze.getOffset(i), maze.getOffset(j), maze.getOffset(k));
                     if(iWidth == maze.width)
@@ -216,9 +205,7 @@ function createMaze(size = mazeSize) {
             }
         }
     }
-    console.log("after loop");
     wallGeom.setAttribute('color', new THREE.InstancedBufferAttribute(new Float32Array(wallColor), 3));
-    console.log(wallColor);
     let wallMesh = new THREE.InstancedMesh(wallGeom, wallMat, walls.length);
     let i = 0;
     walls.forEach((mat) => wallMesh.setMatrixAt(i++, mat));
@@ -231,7 +218,6 @@ function createMaze(size = mazeSize) {
     mazeGroup.add(blockMesh);
 
     timerRunning = false;
-    console.log("Complete call");
 }
 
 const collisionThreshold = 0.25;
@@ -287,7 +273,6 @@ function collisionCheck(){
 
     if(newNearPos.distanceToSquared(mazeNear) != 0)
     {
-        console.log(newNearPos, " |N| ", mazeNear);
         if(newNearPos.x - mazeNear.x < 0)
             checkCollisionAxis('x', 'y', 'z', mazeNear, newNearPos, mazeFar, -1);
         if(newNearPos.y - mazeNear.y < 0)
@@ -298,7 +283,6 @@ function collisionCheck(){
 
     if(newFarPos.distanceToSquared(mazeFar) != 0)
     {
-        console.log(newFarPos, " |F| ", mazeFar);
         if(newFarPos.x - mazeFar.x > 0)
             checkCollisionAxis('x', 'y', 'z', mazeFar, newFarPos, mazeNear, 1);
         if(newFarPos.y - mazeFar.y > 0)
@@ -316,7 +300,7 @@ function collisionCheck(){
         mazeStarted = true;
     else if(mazeStarted == true && mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length == 0)
         completed();
-    else if(mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length != 0){
+    else if(mazeFinished == false && mazeFar.z == mazeData.bounds[2] * 2 + 1 && keys.length != 0){
         //PUT INC KEYS HERE
         console.log("Incomplete Keys: ", keys.length, " more to find");
     }
@@ -376,20 +360,20 @@ function addKeys(num){
         let material = new THREE.MeshBasicMaterial( { color: 0xffff00 } ); 
         let sphere = new THREE.Mesh( geometry, material );
         segments = mazeSize * 2 - 1;
+
         let x = randomOddInteger(segments);
         let y = randomOddInteger(segments);
         let z = randomOddInteger(segments);
 
-
         sphere.position.set(maze.getOffset(x),maze.getOffset(y),maze.getOffset(z));
-        console.log("SPHERE", sphere.position);
         scene.add(sphere);
         keys.push(sphere);
     }
 }
 
 function checkObtainedKeys(){
-    console.log(keys);
+    if (keys.length != 0)
+        console.log("Remaining Keys: ", keys.length);
     for(let i = 0; i < keys.length; i++){
         if(camera.position.distanceToSquared(keys[i].position) <= 0.05)
         {
@@ -413,4 +397,9 @@ function randomOddInteger(max) {
     }
     
     return num;
+}
+
+function newGame(size){
+    createMaze(size);
+    addKeys(size * 2 - 1);
 }
