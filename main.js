@@ -138,7 +138,7 @@ function init(){
         function (gltf) {
             let exitModel = gltf.scene.getObjectByName('Exit');
             let exit = exitModel.clone();
-            exit.position.set(5.85 * mazeSize/3, 5 * mazeSize/3 + (0.2 * Math.pow(mazeSize, 0.75)), 7 * mazeSize/3);
+            exit.position.set(5.85 * mazeSize/3, maze.getOffset(mazeSize * 2 - 1), 7 * mazeSize/3);
             console.log("Exit: " + exit.position.x + ", " + exit.position.y + ", " + exit.position.z);
             exit.rotateZ(179.05);
             scene.add(exit);
