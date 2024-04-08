@@ -40,11 +40,22 @@ var quitButton = document.getElementById('quitBtn');
 var quitButton2 = document.getElementById('quitBtn2');
 var exitScreen = document.getElementById('end');
 
+document.addEventListener('DOMContentLoaded', function() {
+    var slider = document.getElementById('mazeSizeSlider');
+    var output = document.getElementById('mazeSizeValue');
+    output.textContent = slider.value;
+    slider.addEventListener('input', function() {
+        output.textContent = this.value;
+    });
+})
+
 startButton.addEventListener('click', function() {
     console.log("start button clicked");
+    mazeSize = document.getElementById('mazeSizeValue').textContent;
+    console.log("Maze size: " + mazeSize);
     gameContainer.hidden = true;
     init();
-    addKeys(5);
+    addKeys(mazeSize * 2 - 1);
     animate();
 });
 
@@ -116,7 +127,8 @@ function init(){
         function (gltf) {
             let exitModel = gltf.scene.getObjectByName('Exit');
             let exit = exitModel.clone();
-            exit.position.set(5.85, 5, 7);
+            exit.position.set(5.85 * mazeSize/3, 5 * mazeSize/3 + (0.2 * Math.pow(mazeSize, 0.75)), 7 * mazeSize/3);
+            console.log("Exit: " + exit.position.x + ", " + exit.position.y + ", " + exit.position.z);
             exit.rotateZ(179.05);
             scene.add(exit);
         },
@@ -132,7 +144,7 @@ function init(){
     let ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
-    mazeSize = 3;
+    //mazeSize = 3;
     mazeData = null;
     mazeGroup = new THREE.Group();
     scene.add( mazeGroup );
@@ -412,7 +424,7 @@ function addKeys(num) {
 function checkObtainedKeys(){
     if (keys.length != 0)
         console.log("Remaining Keys: ", keys.length);
-    updateInfo(`Eggs Left: ${keys.length}, Eggs Found: ${5 - keys.length}`);
+    updateInfo(`Eggs Left: ${keys.length}, Eggs Found: ${(mazeSize * 2 - 1) - keys.length}`);
     for(let i = 0; i < keys.length; i++){
         if(camera.position.distanceToSquared(keys[i].position) <= 0.05)
         {
@@ -445,5 +457,7 @@ function randomOddInteger(max) {
 
 function newGame(){
     init();
-    addKeys(5);
+    mazeSize = document.getElementById('mazeSizeValue').textContent;
+    console.log(mazeSize);
+    addKeys(mazeSize * 2 - 1);
 }

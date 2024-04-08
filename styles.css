@@ -106,3 +106,13 @@ h1 {
 #end {
     text-align: center;
 }
+
+#mazeSizeValue {
+    font-size: 16px;
+    color: #8B4513;
+    margin-left: 5px;
+}
+
+label {
+    color: #8B4513;
+}
