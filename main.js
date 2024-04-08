@@ -49,6 +49,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })
 
+document.addEventListener('DOMContentLoaded', function() {
+    var slider = document.getElementById('mazeSizeSlider2');
+    var output = document.getElementById('mazeSizeValue2');
+    output.textContent = slider.value;
+    slider.addEventListener('input', function() {
+        output.textContent = this.value;
+    });
+})
+
 startButton.addEventListener('click', function() {
     console.log("start button clicked");
     mazeSize = document.getElementById('mazeSizeValue').textContent;
@@ -73,6 +82,8 @@ restartButton.addEventListener('click', function() {
     console.log("restart button clicked");
     exitScreen.hidden = true;
     game.hidden = false;
+    mazeSize = document.getElementById('mazeSizeValue2').textContent;
+    console.log("Maze size: " + mazeSize);
     newGame();
 });
 
@@ -457,7 +468,7 @@ function randomOddInteger(max) {
 
 function newGame(){
     init();
-    mazeSize = document.getElementById('mazeSizeValue').textContent;
+    mazeSize = document.getElementById('mazeSizeValue2').textContent;
     console.log(mazeSize);
     addKeys(mazeSize * 2 - 1);
 }
